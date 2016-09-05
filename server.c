@@ -41,11 +41,50 @@ int server_connect (server_t *self, char *port){
 }
 
 
-int server_receive (server_t *self){
+int server_receive (server_t *self,serverprocess_t *process){
 
-	int s = 0;
-	s = socket_receive(&(self->peerskt), self->buffer, 10000);
+	int s = 1;
 
+	int i = 0;
+
+	int cantidadaux;
+
+	char ccantidadaux[10];
+
+	char bufferaux[50];
+
+	memset(bufferaux,0,strlen(bufferaux));
+
+	while (s > 0){
+
+		//printf("%s\n",self->buffer );
+		if (i == 1){
+			//serverprocess_setID(process,self->buffer, 2000);
+			
+		}
+		else{
+			
+			serverprocess_setvalues(process,self->buffer, 2000);
+
+		}
+
+		s = socket_receive(&(self->peerskt), self->buffer, 2000);
+		
+		if (i>1){
+			serverprocess_getdatetime (process,bufferaux);
+			strncat(bufferaux," - Datos recibidos: ",20);
+			serverprocess_getcantpar (process,&cantidadaux);
+			sprintf(ccantidadaux, "%d", cantidadaux);
+			strcat(bufferaux,ccantidadaux);
+			fprintf(stderr, "%s\n", bufferaux);
+			memset(bufferaux,0,strlen(bufferaux));
+		}
+
+		i++;
+	}
+
+	
+	
 	return 0;
 }
 

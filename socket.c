@@ -149,7 +149,7 @@ int socket_receive(socket_t *self, char* buffer, size_t length){
    int s = 0;
    bool is_the_socket_valid = true;
 
-   while (received < length && is_the_socket_valid) {
+   //while (received < length && is_the_socket_valid) {
 
       s = recv(self->socket, &buffer[0], length-received -1, MSG_NOSIGNAL);
       
@@ -165,7 +165,7 @@ int socket_receive(socket_t *self, char* buffer, size_t length){
          //memset(&buffer[0],0,strlen(buffer));
       } 
 
-   }
+   //}
 
    if (is_the_socket_valid) {
       return received;
