@@ -7,7 +7,7 @@
 typedef struct{ 
 	struct addrinfo hints;	
 	socket_t socket, peerskt;
-	char buffer[1000];
+	char buffer[10000];
 	}server_t;
 
 

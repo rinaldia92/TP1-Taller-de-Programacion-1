@@ -22,6 +22,7 @@ int main (int argc, char *argv[]){
 	int cantidad, muestrasobtenidas;
 
 	char* buffer;
+	char datetime[20];
  	
  	int year,month,day,hour,min,seg;
 	char cyear[4],cmonth[2],cday[2],chour[2],cmin[2],cseg[2];
@@ -43,10 +44,14 @@ int main (int argc, char *argv[]){
 
  			s = server_connect(&server,argv[2]);
 
- 			if (s!=0)
+ 			if (s!=0){
+ 				s = server_destroy(&server); 	
  				return 1;
- 	
-	 		s = server_receive(&server); 
+ 			}
+ 			
+ 			s = server_receive(&server);
+
+ 			s = server_print(&server); 
 
  			s = server_destroy(&server); 	
 
@@ -87,8 +92,12 @@ int main (int argc, char *argv[]){
 
 				s = fileprocess_create(&process,argv[7]);
 
-				if (s!=0)
+				if (s!=0){
+					s = fileprocess_destroy(&process);
+ 					s = datetime_destroy(&date);
+
  					return 2;
+				}
 
  				s = fileprocess_process(&process);
 
@@ -96,8 +105,12 @@ int main (int argc, char *argv[]){
 
    				s = client_connect (&client, argv[2], argv[3]);
 
-   				if (s!=0)
+   				if (s!=0){
+   					s = fileprocess_destroy(&process);
+ 					s = datetime_destroy(&date);
+ 					s = client_destroy(&client);
  					return 1;
+   				}
 
  				cantidad = (60-seg)/step + 1;
 
@@ -105,20 +118,29 @@ int main (int argc, char *argv[]){
 
  					buffer = malloc (6*cantidad + 20);
 
+ 					memset(buffer,0,6*cantidad + 20);
+
+ 					memset(datetime,0,20);
+
  					s = datetime_getdatetime (&date, buffer);
+
+ 					s = datetime_getdatetime (&date, datetime);
 
  					s = datetime_minuteincrease (&date);
 
  					s = fileprocess_getvalues(&process,buffer,cantidad);
 
-   					s = client_send (&client, buffer, strlen(buffer));
+ 					fprintf(stderr, "%s - Enviando %i muestras\n", datetime,s);
+
+   					s = client_send (&client, buffer, 6*cantidad + 20);
 
    					cantidad = 60/step;
 
    					free(buffer);
  				}
 
- 				
+ 				s = fileprocess_destroy(&process);
+ 				s = datetime_destroy(&date);
    				s = client_destroy(&client);
 
 			} else {

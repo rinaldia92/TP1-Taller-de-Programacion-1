@@ -44,7 +44,8 @@ int server_connect (server_t *self, char *port){
 int server_receive (server_t *self){
 
 	int s = 0;
-	s = socket_receive(&(self->peerskt), self->buffer, 1000);
+	s = socket_receive(&(self->peerskt), self->buffer, 10000);
+
 	return 0;
 }
 

@@ -88,7 +88,7 @@ int socket_connect(socket_t *self, const char* host_name, char* port,struct addr
       } 
       
    }
-
+   freeaddrinfo(result);
    return 0;
 }
 
@@ -148,10 +148,10 @@ int socket_receive(socket_t *self, char* buffer, size_t length){
    int received = 0;
    int s = 0;
    bool is_the_socket_valid = true;
-   //bool is_end_line = false;
 
    while (received < length && is_the_socket_valid) {
-      s = recv(self->socket, &buffer[received], length-received -1, MSG_NOSIGNAL);
+
+      s = recv(self->socket, &buffer[0], length-received -1, MSG_NOSIGNAL);
       
       if (s == 0) { // nos cerraron el socket :(
          is_the_socket_valid = false;
@@ -161,14 +161,11 @@ int socket_receive(socket_t *self, char* buffer, size_t length){
       }
       else {
          received += s;
-         printf("%s\n",buffer);
-      }
-/*
-      if (strcmp(&buffer[received-1],"\n") == 0)
-         is_end_line = true;*/       
+         //printf("%s\n",buffer);
+         //memset(&buffer[0],0,strlen(buffer));
+      } 
+
    }
-   //printf("%s\n",buffer);
-   //printf("\n");
 
    if (is_the_socket_valid) {
       return received;

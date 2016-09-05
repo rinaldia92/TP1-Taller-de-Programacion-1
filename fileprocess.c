@@ -44,18 +44,22 @@ int fileprocess_getvalues(fileprocess_t *self, char* elem, int cant){
 			sprintf(cvalue, "%.1f", value);
 			strncat(elem,cvalue,sizeof(cvalue));
 			
-			if (i != cant-1){
-				strncat(elem," ",1);
-			} else{
-				strncat(elem,"\n",1);
+			if (i!=cant-1){
+				if (!queue_isempty(self->queue)){
+					strncat(elem," ",1);
+				} else{
+					strcat(elem,"\n");
+					return i+1;
+				}	
+			} else {
+				strcat(elem,"\n");
+				return i+1;
 			}
-		}else{
-			strncat(elem,"\n",1);
-			break;
-		}
-	}
 
-	return 0;
+			
+		}
+
+	}
 
 }
 
