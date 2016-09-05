@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef struct {
 
@@ -20,8 +21,7 @@ int datetime_sethour(datetime_t *self, int hour);
 int datetime_setmin(datetime_t *self, int minute);
 int datetime_setsec(datetime_t *self, int second);
 int datetime_getsecond (datetime_t *self, int* second);
-int datetime_getdatetimeformat1 (datetime_t *self, char* datetime);
-int datetime_getdatetimeformat2 (datetime_t *self, char* datetime);
+int datetime_getdatetime (datetime_t *self, char* datetime);
 int datetime_minuteincrease (datetime_t *self);
 int datetime_destroy(datetime_t *self);
 

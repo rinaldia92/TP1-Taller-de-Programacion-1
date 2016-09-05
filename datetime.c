@@ -31,7 +31,7 @@ int datetime_setdatetime (datetime_t *self, char* datetime){
 int datetime_setyear(datetime_t *self, int year){
 
 	self->year = year;
-
+	sprintf(self->cyear, "%04d", self->year);
 	return 0;
 
 }
@@ -39,7 +39,7 @@ int datetime_setyear(datetime_t *self, int year){
 int datetime_setmonth(datetime_t *self, int month){
 
 	self->month = month;
-
+	sprintf(self->cmonth, "%02d", self->month);
 	return 0;
 
 }
@@ -47,7 +47,7 @@ int datetime_setmonth(datetime_t *self, int month){
 int datetime_setday(datetime_t *self, int day){
 
 	self->day = day;
-
+	sprintf(self->cday, "%02d", self->day);
 	return 0;
 
 }
@@ -55,7 +55,7 @@ int datetime_setday(datetime_t *self, int day){
 int datetime_sethour(datetime_t *self, int hour){
 
 	self->hour = hour;
-
+	sprintf(self->chour, "%02d",self->hour);
 	return 0;
 
 }
@@ -63,7 +63,7 @@ int datetime_sethour(datetime_t *self, int hour){
 int datetime_setmin(datetime_t *self, int minute){
 
 	self->min = minute;
-
+	sprintf(self->cmin, "%02d", self->min);
 	return 0;
 
 }
@@ -71,10 +71,17 @@ int datetime_setmin(datetime_t *self, int minute){
 int datetime_setsec(datetime_t *self, int second){
 
 	self->seg = second;
-
+	sprintf(self->cseg, "%02d", self->seg);
 	return 0;
 
 }
+
+
+   	
+   
+   	
+   	
+   	
 
 int datetime_getsecond (datetime_t *self, int* second){
 
@@ -84,37 +91,19 @@ int datetime_getsecond (datetime_t *self, int* second){
 
 }
 
-int datetime_getdatetimeformat1 (datetime_t *self, char* datetime){
+int datetime_getdatetime(datetime_t *self, char* datetime){
 
-	 strcpy(datetime, self->cyear);
-     strcat(datetime, ".");
-     strcat(datetime, self->cmonth);
-     strcat(datetime, ".");
-     strcat(datetime, self->cday);
-     strcat(datetime, "-");
-     strcat(datetime, self->chour);
-     strcat(datetime, ":");
-     strcat(datetime, self->cmin);
-     strcat(datetime, ":");
-     strcat(datetime, "00");
-
-     return 0;
-
-}
-
-int datetime_getdatetimeformat2 (datetime_t *self, char* datetime){
-
-	 strcpy(datetime, self->cyear);
-     strcat(datetime, "-");
-     strcat(datetime, self->cmonth);
-     strcat(datetime, "-");
-     strcat(datetime, self->cday);
-     strcat(datetime, "-");
-     strcat(datetime, self->chour);
-     strcat(datetime, ":");
-     strcat(datetime, self->cmin);
-     strcat(datetime, ":");
-     strcat(datetime, "00");
+	 strncat(datetime, self->cyear,4);
+     strncat(datetime, ".",1);
+     strncat(datetime, self->cmonth,2);
+     strncat(datetime, ".",1);
+     strncat(datetime, self->cday,2);
+     strncat(datetime, "-",1);
+     strncat(datetime, self->chour,2);
+     strncat(datetime, ":",1);
+     strncat(datetime, self->cmin,2);
+     strncat(datetime, ":",1);
+     strncat(datetime, "00",2);
 
      return 0;
 

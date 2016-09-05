@@ -4,10 +4,7 @@
 #include <netdb.h>
 #include <stdio.h>
 
-typedef struct{
-	
-	//char *hostname;
-	//unsigned short port; 
+typedef struct{ 
 	struct addrinfo hints;	
 	socket_t socket, peerskt;
 	char buffer[1000];

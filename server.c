@@ -44,9 +44,7 @@ int server_connect (server_t *self, char *port){
 int server_receive (server_t *self){
 
 	int s = 0;
-	//while (s >= 0)
-		s = socket_receive(&(self->peerskt), self->buffer, 100);
-	//s = server_print(self);
+	s = socket_receive(&(self->peerskt), self->buffer, 1000);
 	return 0;
 }
 

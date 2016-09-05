@@ -1,6 +1,8 @@
 #include "socket.h"
 #include "server.h"
 #include "client.h"
+#include "fileprocess.h"
+#include "datetime.h"
 #include <stddef.h>
 #include <string.h>
 #include <stdbool.h>
@@ -8,101 +10,128 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-#define REQUEST_MAX_LEN 128
-#define RESPONSE_MAX_LEN 1024
-
 int main (int argc, char *argv[]){
 
-	char *type = "server";
+	char *type1 = "server";
+	char *type2 = "client";
 
 	int s;
 
-	char* request;
- 	int request_len;
+	int step,milisecondstep;
+
+	int cantidad, muestrasobtenidas;
+
+	char* buffer;
+ 	
+ 	int year,month,day,hour,min,seg;
+	char cyear[4],cmonth[2],cday[2],chour[2],cmin[2],cseg[2];
+
 
 	server_t server;
 
 	client_t client;
 
-	if (strcmp(argv[1],type) == 0){	
-		
-		s = server_create(&server);
+	datetime_t date;
 
- 		s = server_connect(&server,argv[2]);
+	fileprocess_t process;
+
+	if (strcmp(argv[1],type1) == 0){	
+
+		if (argc == 3){
+			
+			s = server_create(&server);
+
+ 			s = server_connect(&server,argv[2]);
+
+ 			if (s!=0)
+ 				return 1;
  	
- 		s = server_receive(&server); 
+	 		s = server_receive(&server); 
 
- 		s = server_destroy(&server); 	
+ 			s = server_destroy(&server); 	
+
+		} else {
+
+			return 2;
+		}
 	
 	}
 	else{
+		if (strcmp(argv[1],type2) == 0){
 
-		s = client_create(&client);
+			if (argc == 8){
 
-   		s = client_connect (&client, argv[2], argv[3]);
+				milisecondstep = atoi(argv[5]);
 
-   		request = "Felix PUTO \n";
+				step = milisecondstep/1000;
 
-   		request_len = strlen(request);
+				muestrasobtenidas = 0;
 
-   		s = client_send (&client, request, request_len);
+				sscanf(argv[6],"%[^.].%[^.].%[^-]-%[^:]:%[^:]:%s",cyear,cmonth,cday,chour,cmin,cseg);
 
-   		s = client_destroy(&client);
+				year = atoi(cyear);  
+				month  = atoi(cmonth);
+				day  = atoi(cday);
+				hour  = atoi(chour);
+				min  = atoi(cmin);
+				seg  = atoi(cseg); 
 
+				s = datetime_create(&date); 
+
+				datetime_setyear(&date, year);
+			    datetime_setmonth(&date, month);
+			    datetime_setday(&date,day);
+			    datetime_sethour(&date, hour);
+			    datetime_setmin(&date, min);
+			    datetime_setsec(&date,seg);
+
+				s = fileprocess_create(&process,argv[7]);
+
+				if (s!=0)
+ 					return 2;
+
+ 				s = fileprocess_process(&process);
+
+				s = client_create(&client);
+
+   				s = client_connect (&client, argv[2], argv[3]);
+
+   				if (s!=0)
+ 					return 1;
+
+ 				cantidad = (60-seg)/step + 1;
+
+ 				while (!fileprocess_isempty(&process)){
+
+ 					buffer = malloc (6*cantidad + 20);
+
+ 					s = datetime_getdatetime (&date, buffer);
+
+ 					s = datetime_minuteincrease (&date);
+
+ 					s = fileprocess_getvalues(&process,buffer,cantidad);
+
+   					s = client_send (&client, buffer, strlen(buffer));
+
+   					cantidad = 60/step;
+
+   					free(buffer);
+ 				}
+
+ 				
+   				s = client_destroy(&client);
+
+			} else {
+
+				return 2;
+			}
+
+		}
+
+		else {
+			return 2;
+		}
 	}
-
-	// int s = 0;
-   	/*bool are_we_connected = false;
-   	bool is_there_a_socket_error = false;
-   	bool is_the_remote_socket_closed = false;
-*/
- //   	char request[REQUEST_MAX_LEN];
- //   	int request_len;
- //   	char response[RESPONSE_MAX_LEN];
-
- //   	// A quien nos queremos conectar
- //   	char *hostname = "www.fi.uba.ar";
- //   	const char *servicename = "http";
-
- //   	client_t client;
-	
- //   	s = client_create(&client);
-
- //   	s = client_connect (&client, hostname, 80);
-
-	// snprintf(request, REQUEST_MAX_LEN, "GET /es/node/%s HTTP/1.1\r\nHost: www.fi.uba.ar\r\n\r\n", argv[1]);
- //   	request[REQUEST_MAX_LEN-1] = 0;
- //   	request_len = strlen(request);
-
- //   	s = client_send (&client, request, request_len);
-   
- //   	if (is_the_remote_socket_closed || is_there_a_socket_error) {
- //      s = client_destroy(&client);
- //      return 1;
- //   	}
-
- //   	s = client_receive(&client);
-
- //   	s = client_destroy(&client);
-
-
-  //  	int s;
-
-  
-
-   	// client_t client;
-
-   	
-   
-   	// if (is_the_remote_socket_closed || is_there_a_socket_error) {
-    //   s = client_destroy(&client);
-    //   return 1;
-   	// }
-
-   	// //s = client_receive(&client);
-
-   	// s = client_destroy(&client);
 
 	return 0;
 }
