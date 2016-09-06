@@ -1,28 +1,34 @@
 #include "queue.h"
 
-void queue_create(queue_t *self, int datasize){
+void queue_create(queue_t *self, int datasize)
+{
 	self->first = self->last = NULL;
 	self->datasize = datasize;
 }
 
-void queue_empty(queue_t *self){
+void queue_empty(queue_t *self)
+{
 	queuenode *aux = self->first;
-	queuenode *psig;
+	queuenode *sig;
 	while (aux)
 	{
-		psig = aux->sig;
+		sig = aux->sig;
 		free(aux->elem);
 		free(aux);
-		aux = psig;
+		aux = sig;
 	}
 	self->first = self->last = NULL;
 }
 
-bool queue_isempty(queue_t self){
+
+bool queue_isempty(queue_t self)
+{
 	return (self.first==NULL);
 }
 
-int queue_push(queue_t *self, void* elem){
+
+int queue_push(queue_t *self, void* pE)
+{
 	queuenode *node = (queuenode*) malloc(sizeof(queuenode));
 	if (!node)
 		return 1;
@@ -40,12 +46,13 @@ int queue_push(queue_t *self, void* elem){
 			free(node);
 			return 1;
 		}
-		memcpy(node->elem, elem, self->datasize);
+		memcpy(node->elem, pE, self->datasize);
 		return 0;
 	}
 }
 
-int queue_pop(queue_t *self, void* elem){
+int queue_pop(queue_t *self, void* pE)
+{
 	queuenode *aux = self->first;
 	if (!self->first)
 		return 1;
@@ -54,8 +61,9 @@ int queue_pop(queue_t *self, void* elem){
 	{
 		self->last = NULL;
 	}
-	memcpy(elem, aux->elem, self->datasize);
+	memcpy(pE, aux->elem, self->datasize);
 	free(aux->elem);
 	free(aux);
-	return 0;
+	return 1;
 }
+

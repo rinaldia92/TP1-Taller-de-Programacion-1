@@ -2,6 +2,7 @@
 #include "server.h"
 #include "client.h"
 #include "fileprocess.h"
+#include "serverprocess.h"
 #include "datetime.h"
 #include <stddef.h>
 #include <string.h>
@@ -24,9 +25,7 @@ int main (int argc, char *argv[]){
 	char* buffer;
 	char datetime[20];
  	
- 	int year,month,day,hour,min,seg;
-	char cyear[4],cmonth[2],cday[2],chour[2],cmin[2],cseg[2];
-
+ 	int seg;
 
 	server_t server;
 
@@ -34,26 +33,31 @@ int main (int argc, char *argv[]){
 
 	datetime_t date;
 
-	fileprocess_t process;
+	fileprocess_t fprocess;
+
+	serverprocess_t sprocess;
 
 	if (strcmp(argv[1],type1) == 0){	
 
 		if (argc == 3){
+
+			s = serverprocess_create(&sprocess);
 			
 			s = server_create(&server);
 
  			s = server_connect(&server,argv[2]);
 
  			if (s!=0){
- 				s = server_destroy(&server); 	
+ 				s = server_destroy(&server);
+ 				s = serverprocess_destroy(&sprocess); 	
  				return 1;
  			}
  			
- 			s = server_receive(&server);
-
- 			s = server_print(&server); 
+ 			s = server_receive(&server,&sprocess);
 
  			s = server_destroy(&server); 	
+
+ 			s = serverprocess_destroy(&sprocess);
 
 		} else {
 
@@ -72,41 +76,29 @@ int main (int argc, char *argv[]){
 
 				muestrasobtenidas = 0;
 
-				sscanf(argv[6],"%[^.].%[^.].%[^-]-%[^:]:%[^:]:%s",cyear,cmonth,cday,chour,cmin,cseg);
-
-				year = atoi(cyear);  
-				month  = atoi(cmonth);
-				day  = atoi(cday);
-				hour  = atoi(chour);
-				min  = atoi(cmin);
-				seg  = atoi(cseg); 
-
 				s = datetime_create(&date); 
 
-				datetime_setyear(&date, year);
-			    datetime_setmonth(&date, month);
-			    datetime_setday(&date,day);
-			    datetime_sethour(&date, hour);
-			    datetime_setmin(&date, min);
-			    datetime_setsec(&date,seg);
+				s = datetime_setdatetime(&date,argv[6]);
 
-				s = fileprocess_create(&process,argv[7]);
+				s = datetime_getsecond(&date,&seg);
+
+				s = fileprocess_create(&fprocess,argv[7]);
 
 				if (s!=0){
-					s = fileprocess_destroy(&process);
+					s = fileprocess_destroy(&fprocess);
  					s = datetime_destroy(&date);
 
  					return 2;
 				}
 
- 				s = fileprocess_process(&process);
+ 				s = fileprocess_process(&fprocess);
 
 				s = client_create(&client);
 
    				s = client_connect (&client, argv[2], argv[3]);
 
    				if (s!=0){
-   					s = fileprocess_destroy(&process);
+   					s = fileprocess_destroy(&fprocess);
  					s = datetime_destroy(&date);
  					s = client_destroy(&client);
  					return 1;
@@ -114,7 +106,19 @@ int main (int argc, char *argv[]){
 
  				cantidad = (60-seg)/step + 1;
 
- 				while (!fileprocess_isempty(&process)){
+				buffer = malloc (6*cantidad + 20);
+
+ 				memset(buffer,0,6*cantidad + 20);
+
+ 				//strncat(buffer,"Recibiendo termostato. ID=",26);
+ 				strncat(buffer,argv[4],strlen(argv[4]));
+ 				//strncat(buffer,"\n",1);
+
+ 				s = client_send (&client, buffer, 6*cantidad + 20);
+
+ 				free(buffer);
+
+ 				while (!fileprocess_isempty(&fprocess)){
 
  					buffer = malloc (6*cantidad + 20);
 
@@ -128,18 +132,18 @@ int main (int argc, char *argv[]){
 
  					s = datetime_minuteincrease (&date);
 
- 					s = fileprocess_getvalues(&process,buffer,cantidad);
+ 					s = fileprocess_getvalues(&fprocess,buffer,cantidad);
 
  					fprintf(stderr, "%s - Enviando %i muestras\n", datetime,s);
 
    					s = client_send (&client, buffer, 6*cantidad + 20);
-
+ 					
    					cantidad = 60/step;
 
    					free(buffer);
  				}
 
- 				s = fileprocess_destroy(&process);
+ 				s = fileprocess_destroy(&fprocess);
  				s = datetime_destroy(&date);
    				s = client_destroy(&client);
 

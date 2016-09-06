@@ -36,6 +36,13 @@ int datetime_getsecond (datetime_t *self, int *second){
 
 }
 
+int datetime_getday (datetime_t *self, int *day){
+
+	*day = self->day;
+
+	return 0;
+}
+
 int datetime_getdatetime(datetime_t *self, char* datetime){
 
 	 strncat(datetime, self->cyear,4);
@@ -50,6 +57,19 @@ int datetime_getdatetime(datetime_t *self, char* datetime){
      strncat(datetime, ":",1);
      strncat(datetime, "00",2);
 
+     return 0;
+
+}
+
+
+int datetime_getdate(datetime_t *self, char* date){
+
+	 strncat(date, self->cyear,4);
+     strncat(date, ".",1);
+     strncat(date, self->cmonth,2);
+     strncat(date, ".",1);
+     strncat(date, self->cday,2);
+     
      return 0;
 
 }

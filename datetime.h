@@ -16,6 +16,8 @@ int datetime_create(datetime_t *self);
 int datetime_setdatetime (datetime_t *self, char* datetime);
 int datetime_getsecond (datetime_t *self, int *second);
 int datetime_getdatetime (datetime_t *self, char* datetime);
+int datetime_getdate(datetime_t *self, char* date);
+int datetime_getday (datetime_t *self, int *day);
 int datetime_minuteincrease (datetime_t *self);
 int datetime_destroy(datetime_t *self);
 

@@ -62,8 +62,6 @@ int socket_connect(socket_t *self, const char* host_name, char* port,struct addr
 
    struct addrinfo *result, *ptr; 
 
-   //sprintf(my_port, "%d", port);
-
    are_we_connected = false;
 
    s = getaddrinfo(host_name, port, hints, &result);
@@ -84,7 +82,7 @@ int socket_connect(socket_t *self, const char* host_name, char* port,struct addr
             close(self->socket);
             return 1;
          }
-         are_we_connected = (s != -1); // nos conectamos?
+         are_we_connected = (s != -1);
       } 
       
    }

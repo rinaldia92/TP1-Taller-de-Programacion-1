@@ -10,6 +10,7 @@ typedef struct{
 	struct addrinfo hints;	
 	socket_t socket, peerskt;
 	char buffer[2000];
+	char id[20];
 	}server_t;
 
 

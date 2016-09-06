@@ -11,6 +11,8 @@ int server_create (server_t *self){
 	socket_create(&(self->socket));
 	socket_create(&(self->peerskt));
 
+	memset(self->id,0,20);
+
 	return 0;
 
 }
@@ -47,33 +49,36 @@ int server_receive (server_t *self,serverprocess_t *process){
 
 	int i = 0;
 
+	int k;
+
 	int cantidadaux;
 
 	char ccantidadaux[10];
 
-	char bufferaux[50];
+	char bufferaux[20];
 
 	memset(bufferaux,0,strlen(bufferaux));
 
 	while (s > 0){
 
-		//printf("%s\n",self->buffer );
 		if (i == 1){
-			//serverprocess_setID(process,self->buffer, 2000);
+
+			strncat(self->id,self->buffer,strlen(self->buffer));
+			fprintf(stderr, "Recibiendo termostato. ID=%s\n",self->id);
 			
 		}
 		else{
 			
-			serverprocess_setvalues(process,self->buffer, 2000);
+			k = serverprocess_setvalues(process,self->buffer, 2000);
 
 		}
 
 		s = socket_receive(&(self->peerskt), self->buffer, 2000);
 		
 		if (i>1){
-			serverprocess_getdatetime (process,bufferaux);
+			k = serverprocess_getdatetime(process,bufferaux);
 			strncat(bufferaux," - Datos recibidos: ",20);
-			serverprocess_getcantpar (process,&cantidadaux);
+			k = serverprocess_getcantpar (process,&cantidadaux);
 			sprintf(ccantidadaux, "%d", cantidadaux);
 			strcat(bufferaux,ccantidadaux);
 			fprintf(stderr, "%s\n", bufferaux);
@@ -83,7 +88,9 @@ int server_receive (server_t *self,serverprocess_t *process){
 		i++;
 	}
 
-	
+	fprintf(stderr, "Termostato desconectado. ID=%s\n",self->id);
+
+	s = serverprocess_all(process);
 	
 	return 0;
 }

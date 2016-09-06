@@ -42,24 +42,27 @@ int fileprocess_getvalues(fileprocess_t *self, char* elem, int cant){
 		if(!queue_isempty(self->queue)){
 			s=queue_pop(&(self->queue),&value);
 			sprintf(cvalue, "%.1f", value);
-			strncat(elem,cvalue,sizeof(cvalue));
+			
 			
 			if (i!=cant-1){
 				if (!queue_isempty(self->queue)){
+					strncat(elem,cvalue,sizeof(cvalue));
 					strncat(elem," ",1);
 				} else{
-					strcat(elem,"\n");
-					return i+1;
+					strncat(elem,"\n",1);
+					break;
 				}	
 			} else {
-				strcat(elem,"\n");
-				return i+1;
+				strncat(elem,cvalue,sizeof(cvalue));
+				strncat(elem,"\n",1);
+				
 			}
-
 			
 		}
 
 	}
+
+	return i;
 
 }
 
