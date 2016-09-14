@@ -1,172 +1,79 @@
 #include "serverprocess.h"
 
-int serverprocess_create (serverprocess_t *self){
-
-		queue_create(&(self->queuetemp),sizeof(float));
-		queue_create(&(self->queuedatetime),20*sizeof(char));
-		queue_create(&(self->queuecant),sizeof(int));
-		datetime_create(&(self->datetime));
+int serverprocess_create(serverprocess_t *self){
+		self->i = 0;
+		self->cant = 1000;
+		self->buffer = malloc((self->cant)*sizeof(float));
+		memset(self->buffer,0,self->cant);
 		return 0;
 }
 
-int serverprocess_setvalues(serverprocess_t *self,char *buffer, size_t size){
-
-	char datetimeaux[20];
-	char* aux;
-	float value;
-	char cvalue[5];
-
-	aux = "";
-
-	self->cantidadparcial = 0;
-	sscanf(buffer,"%s %[^\n]",self->datetimeaux,buffer);
-
-	queue_push(&(self->queuedatetime),self->datetimeaux);
-
-	while (strlen(buffer)>5){
-         sscanf(buffer,"%s %[^\n]",cvalue,buffer);
-         value = strtof(cvalue,&aux);
-         queue_push(&(self->queuetemp),&value);
-         self->cantidadparcial++;
-         
-
-    }
-    sscanf(buffer,"%s %[^\n]",cvalue,buffer);
-    queue_push(&(self->queuetemp),&value);
-    self->cantidadparcial++;
-    queue_push(&(self->queuecant),&(self->cantidadparcial));
-
-
-	return 0;
-}
-
-int serverprocess_getcantpar (serverprocess_t *self,int *cant){
-
-	*cant = self->cantidadparcial;
-
-	return 0;
-}
-
-int serverprocess_getdatetime (serverprocess_t *self,char* buffer){
-
-	strcat(buffer,self->datetimeaux); 
-
-	return 0;
-}
-
-int serverprocess_all(serverprocess_t *self){
-
-	int s,j,smin;
-	char buffer[20];
-	char bufferdate[10];
-	int lastday = 0;
-	int day;
-	int cant = 0;
-	int cantaux;
-
-	float *values;
-	float valuesaux,max,min,mediana;
-
-	queue_t datesaux;
-	queue_t ccantaux;
-
-	queue_create(&datesaux,10*sizeof(char));
-	queue_create(&ccantaux,sizeof(int));
-
-	memset(bufferdate,0,10);
-
-	s = queue_pop(&(self->queuedatetime),buffer);
-	s = queue_pop(&(self->queuedatetime),buffer);
-	s = datetime_setdatetime(&(self->datetime),buffer);
-	s = datetime_getday(&(self->datetime),&day);
-	lastday = day;
-	s = queue_pop(&(self->queuecant),&cantaux);
-	s = queue_pop(&(self->queuecant),&cantaux);
-	cant += cantaux;
-	s = datetime_getdate(&(self->datetime),bufferdate);
-
-	memset(buffer,0,20);
-	
-
-	while (!queue_isempty(self->queuedatetime)){
-
-		s = queue_pop(&(self->queuedatetime),buffer);
-		
-		s = datetime_setdatetime(&(self->datetime),buffer);
-		s = datetime_getday(&(self->datetime),&day);
-		memset(buffer,0,20);
-		if (day != lastday){
-			lastday = day;
-			
-			s = queue_push(&datesaux,bufferdate);
-			s = queue_push(&ccantaux,&cant);
-			memset(bufferdate,0,10);
-			s = datetime_getdate(&(self->datetime),bufferdate);
-			s = queue_pop(&(self->queuecant),&cantaux);
-			cant = cantaux;
-		}else{
-			s = queue_pop(&(self->queuecant),&cantaux);
-			cant = cant + cantaux;
-			if (queue_isempty(self->queuedatetime)){
-				s = queue_push(&datesaux,bufferdate);
-				s = queue_push(&ccantaux,&cant);
-			}
-		}		
+int serverprocess_setvalues(serverprocess_t *self,float value){
+	if(self->i == self->cant){
+		self->cant = 2*self->cant;
+		self->buffer = realloc(self->buffer,(self->cant)*sizeof(float));
 	}
+	(self->buffer)[self->i] = value;
 
-	s = queue_pop(&(self->queuetemp),&valuesaux);
+	(self->i)++;
 
-	while (!queue_isempty(datesaux)){
+	return 0;
+}
 
-		s = queue_pop(&datesaux,bufferdate);
-		s = queue_pop(&ccantaux,&cantaux);
+int serverprocess_getcant(serverprocess_t *self,int *cant){
+	*cant = self->i;
 
-		values = malloc(cantaux*sizeof(float));
+	return 0;
+}
 
-		for(j=0;j<cantaux;j++){
-			s = queue_pop(&(self->queuetemp),&valuesaux);
-			values[j]=valuesaux;
-		}
-			
-		for (s=0; s<cantaux; s++){
+int serverprocess_getmed(serverprocess_t *self, char *buffer){
+	char aux[10];
+	strncat(buffer," Max=",5);
+	snprintf(aux,sizeof(aux), "%.1f", self->max);
+	strncat(buffer,aux,5);
+	strncat(buffer," Min=",5);
+	snprintf(aux,sizeof(aux), "%.1f", self->min);
+	strncat(buffer,aux,5);
+	strncat(buffer," Mediana=",9);
+	snprintf(aux,sizeof(aux), "%.1f", self->med);
+	strncat(buffer,aux,5);
+	strncat(buffer," Muestras=",10);
+	snprintf(aux,sizeof(aux), "%d", self->i);
+	strncat(buffer,aux,10);
+
+	memset(self->buffer,0,self->cant);
+	self->i = 0;
+
+	return 0;
+}
+
+int serverprocess_order(serverprocess_t *self){
+		int j,s,smin;
+		float valuesaux;
+
+		for (s=0; s<(self->i); s++){
 		  smin=s;
-		  for (j=s+1; j<cantaux; j++){
-		    if(values[j]<values[smin])
+		  for (j=s+1; j<(self->i); j++){
+		    if ((self->buffer)[j]<(self->buffer)[smin])
 		    	smin=j;
 		  }
-		  valuesaux = values[s];
-		  values[s] = values[smin];
-		  values[smin] = valuesaux;
+		  valuesaux = (self->buffer)[s];
+			(self->buffer)[s] = (self->buffer)[smin];
+		  (self->buffer)[smin] = valuesaux;
 		}
 
-		min = values[0];
-		max = values[cantaux-1];
+		self->min = (self->buffer)[0];
+		self->max = (self->buffer)[(self->i)-1];
 
-		if (cantaux%2 == 0)
-			mediana = values[cantaux/2 - 1];
+		if ((self->i)%2 == 0)
+			self->med = (self->buffer)[(self->i)/2 - 1];
 		else
-			mediana = values[cantaux/2];
-
-		fprintf(stdout, "%s Max=%.1f Min=%.1f Mediana=%.1f Muestras=%d\n",bufferdate,min,max,mediana,cantaux);
-		memset(bufferdate,0,10);
-		free(values);
-
-
- 	} 
-
-	queue_empty(&datesaux);
-	queue_empty(&ccantaux);
+			self->med = (self->buffer)[(self->i)/2];
 
 	return 0;
-
 }
 
-int serverprocess_destroy (serverprocess_t *self){
-
-	queue_empty(&(self->queuetemp));
-	queue_empty(&(self->queuedatetime));
-	queue_empty(&(self->queuecant));
-	datetime_destroy(&(self->datetime));
-
+int serverprocess_destroy(serverprocess_t *self){
+	free(self->buffer);
 	return 0;
-}		
+}
