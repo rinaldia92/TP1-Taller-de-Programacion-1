@@ -1,67 +1,62 @@
 #include "client.h"
 
+#define	DATETIMELENGTH 20
+#define VALUELENGTH 7
+
 int client_create(client_t *self){
-	memset(&self->hints, 0, sizeof(struct addrinfo));
- 	self->hints.ai_family = AF_INET;       /* IPv4 (or AF_INET6 for IPv6)     */
- 	self->hints.ai_socktype = SOCK_STREAM; /* TCP  (or SOCK_DGRAM for UDP)    */
- 	self->hints.ai_flags = 0;              /* None (or AI_PASSIVE for server) */
-
-	socket_create(&(self->socket));
+	socket_create(&(self->socket),0);
 	datetime_create(&(self->datetime));
-
 	return 0;
 }
 
 int client_connect(client_t *self, char *hostname, char *port){
 	int s;
-
-	s = socket_connect(&(self->socket), hostname, port, &(self->hints));
-
+	s = socket_connect(&(self->socket), hostname, port);
 	if (s != 0){
 		socket_shutdown(&(self->socket));
 		return 1;
 	}
-
 	return 0;
 }
 
 int client_setdatetime(client_t *self, char *datetime){
 	datetime_setdatetime(&(self->datetime),datetime);
-
 	return 0;
 }
 
 int client_setfile(client_t *self, char *file){
 	fileprocess_create(&(self->process),file);
-
 	return 0;
 }
 
 int client_setstep(client_t *self, char *step){
 	self->milisecondstep = atoi(step);
-
 	return 0;
 }
 
 int client_sendid(client_t *self, char* buffer, int size){
 	socket_send(&(self->socket), buffer, size);
-
 	return 0;
 }
 
-
 int client_send(client_t *self){
 	int s;
-	int step,seg,cantidad;
+	int step,seg,cantidad,size;
 	char *buffer;
-	char datetime[25];
+	char datetime[DATETIMELENGTH];
+	bool firstlap = true;
+	/*firstlap utilizado para chequear si es el primer envio debido
+  a que el primer minuto puede no estar completo*/
 
 	step = (self->milisecondstep)/1000;
 
 	datetime_getsecond(&(self->datetime),&seg);
 
 	cantidad = 60/step;
-	buffer = malloc(7*cantidad + 25);
+	size = cantidad*VALUELENGTH +DATETIMELENGTH;
+	buffer = malloc(size);
+
+	//Seteo la cantidad de elementos a tomar en el primer minuto
 	if (seg != 0){
 		if ((60-seg)%step != 0)
 			cantidad = (60-seg)/step + 1;
@@ -69,15 +64,13 @@ int client_send(client_t *self){
 			cantidad = (60-seg)/step;
 	}
 
+//Cargo el buffer con las temperaturas y envio mientras el archivo no este vacio
 	while (!fileprocess_isempty(&(self->process))){
-		memset(buffer,0,7*cantidad + 25);
+		datetime[0]=0;
+		buffer[0]=0;
 
-		memset(datetime,0,25);
-
-		datetime_getdatetime(&(self->datetime), buffer);
-
-		datetime_getdatetime(&(self->datetime), datetime);
-
+		datetime_getdatetime(&(self->datetime), buffer,sizeof(datetime));
+		datetime_getdatetime(&(self->datetime), datetime,sizeof(datetime));
 		datetime_minuteincrease(&(self->datetime));
 
 		s = fileprocess_getvalues(&(self->process),buffer,cantidad);
@@ -86,17 +79,12 @@ int client_send(client_t *self){
 			fprintf(stderr, "%s - Enviando %i muestras\n", datetime,s);
 			socket_send(&(self->socket), buffer, strlen(buffer));
 		}
-
-		cantidad = 60/step;
+		if (firstlap){
+			cantidad = 60/step;
+			firstlap = false;
+		}
 	}
 	free(buffer);
-
-	return 0;
-}
-
-int client_receive(client_t *self){
-	socket_receive(&(self->socket), self->buffer, 100);
-
 	return 0;
 }
 
@@ -105,6 +93,5 @@ int client_destroy(client_t *self){
 	socket_destroy(&(self->socket));
 	datetime_destroy(&(self->datetime));
 	fileprocess_destroy(&(self->process));
-
 	return 0;
 }

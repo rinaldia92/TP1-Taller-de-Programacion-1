@@ -1,8 +1,6 @@
 #include "socket.h"
 #include "server.h"
 #include "client.h"
-//#include "fileprocess.h"
-//#include "serverprocess.h"
 #include "datetime.h"
 #include <stddef.h>
 #include <string.h>
@@ -11,15 +9,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CLIENT "client"
+#define SERVER "server"
+#define MAXBUFFER 25
+
 int main(int argc, char *argv[]){
-	char *type1 = "server";
-	char *type2 = "client";
 	int s;
-	char buffer[25];
+	char buffer[MAXBUFFER];
 	server_t server;
 	client_t client;
 
-	if (strcmp(argv[1],type1) == 0){
+	if (strcmp(argv[1],SERVER) == 0){
 		 if (argc == 3){
 		 	s = server_create(&server);
  	 		s = server_connect(&server,argv[2]);
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]){
 			return 2;
 		}
 	}else{
-		if (strcmp(argv[1],type2) == 0){
+		if (strcmp(argv[1],CLIENT) == 0){
 			if (argc == 8){
 				s = client_create(&client);
 				s = client_setdatetime(&client, argv[6]);
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]){
 					return 1;
  				}
 
- 				memset(buffer,0,25);
+				buffer[0]=0;
 
  				strncat(buffer,argv[4],strlen(argv[4]));
 				strncat(buffer,"\n",1);

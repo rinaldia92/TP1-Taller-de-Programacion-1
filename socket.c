@@ -1,7 +1,14 @@
 #include "socket.h"
 
-int socket_create(socket_t *self){
+#define MAXLISTEN 20
+
+int socket_create(socket_t *self,int type){
    self->socket = 0;
+
+  memset(&self->hints, 0, sizeof(struct addrinfo));
+ 	self->hints.ai_family = AF_INET;       /* IPv4 (or AF_INET6 for IPv6)     */
+ 	self->hints.ai_socktype = SOCK_STREAM; /* TCP  (or SOCK_DGRAM for UDP)    */
+ 	self->hints.ai_flags = type;     /* None (or AI_PASSIVE for server) */
 
    return 0;
 }
@@ -17,12 +24,12 @@ int socket_destroy(socket_t *self){
 	return 0;
 }
 
-int socket_bind_and_listen(socket_t *self, char* port,struct addrinfo *hints){
+int socket_bind_and_listen(socket_t *self, char* port){
    int s;
 
    struct addrinfo *ptr;
 
-   s = getaddrinfo(NULL, port, hints, &ptr);
+   s = getaddrinfo(NULL, port, &(self->hints), &ptr);
 
    self->socket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
 
@@ -35,7 +42,7 @@ int socket_bind_and_listen(socket_t *self, char* port,struct addrinfo *hints){
 
    freeaddrinfo(ptr);
 
-   s = listen(self->socket, 20);
+   s = listen(self->socket, MAXLISTEN);
    if (s == -1) {
       close(self->socket);
       return 1;
@@ -44,8 +51,7 @@ int socket_bind_and_listen(socket_t *self, char* port,struct addrinfo *hints){
    return 0;
 }
 
-int socket_connect(socket_t *self, const char* host_name, char* port,
-                                            struct addrinfo *hints){
+int socket_connect(socket_t *self, const char* host_name, char* port){
    int s;
    bool are_we_connected;
 
@@ -53,10 +59,9 @@ int socket_connect(socket_t *self, const char* host_name, char* port,
 
    are_we_connected = false;
 
-   s = getaddrinfo(host_name, port, hints, &result);
+   s = getaddrinfo(host_name, port, &(self->hints), &result);
 
-   for (ptr = result; ptr != NULL && are_we_connected == false;
-                                            ptr = ptr->ai_next) {
+   for (ptr = result; ptr != NULL && !are_we_connected; ptr = ptr->ai_next) {
       self->socket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
 
       if (self->socket == -1) {
@@ -93,8 +98,7 @@ int socket_send(socket_t *self, const char* buffer, size_t length){
 
    bytes_sent = 0;
 
-   while (bytes_sent < length && socket_error == false
-                      && remote_socket_closed == false) {
+   while (bytes_sent < length && !socket_error && !remote_socket_closed) {
       s = send(self->socket, &buffer[bytes_sent],
           length - bytes_sent, MSG_NOSIGNAL);
 
@@ -107,14 +111,12 @@ int socket_send(socket_t *self, const char* buffer, size_t length){
       }
    }
 
-   if (!remote_socket_closed) {
+   if (!remote_socket_closed && !socket_error) {
       return bytes_sent;
    }else {
       return -1;
    }
 }
-
-
 
 int socket_receive(socket_t *self, char* buffer, size_t length){
   int s = 1;

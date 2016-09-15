@@ -1,6 +1,5 @@
 #include "fileprocess.h"
 
-
 int fileprocess_create(fileprocess_t *self, 	char* file){
 	self->arch = fopen(file, "rb");
 	self->endfile = false;
@@ -8,11 +7,8 @@ int fileprocess_create(fileprocess_t *self, 	char* file){
 		return 0;
 	else
 		return 1;
-
-
 }
 
-//Devuelve un buffer cargado con cierta cantidad de temperaturas
 int fileprocess_getvalues(fileprocess_t *self, char* elem, int cant){
 	int i;
 	short value,endianvalue;
@@ -67,5 +63,4 @@ int fileprocess_destroy(fileprocess_t *self){
 
 bool fileprocess_isempty(fileprocess_t *self){
 	return self->endfile;
-	//return feof(self->arch);
 }

@@ -1,14 +1,38 @@
 #include "serverprocess.h"
 
+#define INICANT 1000 //cantidad inicial del vector
+#define VALUELENGTH 7
+
 int serverprocess_create(serverprocess_t *self){
 		self->i = 0;
-		self->cant = 1000;
+		self->cant = INICANT;
 		self->buffer = malloc((self->cant)*sizeof(float));
-		memset(self->buffer,0,self->cant);
+		(self->buffer)[0]=0;
 		return 0;
 }
 
-int serverprocess_setvalues(serverprocess_t *self,float value){
+//Guarda los valores en el vector y si es necesario lo agranda
+int serverprocess_setvalues(serverprocess_t *self,char *values){
+	float value;
+	char cvalue[VALUELENGTH];
+	int cant = 0;
+	char *aux = "";
+
+	while (strlen(values)> 6){
+		sscanf(values,"%s %[^\n]",cvalue,values);
+		value = strtof(cvalue,&aux);
+		if(self->i == self->cant){
+			self->cant = 2*self->cant;
+			self->buffer = realloc(self->buffer,(self->cant)*sizeof(float));
+		}
+		(self->buffer)[self->i] = value;
+		(self->i)++;
+		cant++;
+	}
+	sscanf(values,"%s %[^\n]",cvalue,values);
+	value = strtof(cvalue,&aux);
+	cant++;
+
 	if(self->i == self->cant){
 		self->cant = 2*self->cant;
 		self->buffer = realloc(self->buffer,(self->cant)*sizeof(float));
@@ -17,7 +41,7 @@ int serverprocess_setvalues(serverprocess_t *self,float value){
 
 	(self->i)++;
 
-	return 0;
+	return cant;
 }
 
 int serverprocess_getcant(serverprocess_t *self,int *cant){
@@ -26,42 +50,7 @@ int serverprocess_getcant(serverprocess_t *self,int *cant){
 	return 0;
 }
 
-int serverprocess_getmed(serverprocess_t *self, char *buffer){
-	char aux[10];
-	strncat(buffer," Max=",5);
-	snprintf(aux,sizeof(aux), "%.1f", self->max);
-	strncat(buffer,aux,5);
-	strncat(buffer," Min=",5);
-	snprintf(aux,sizeof(aux), "%.1f", self->min);
-	strncat(buffer,aux,5);
-	strncat(buffer," Mediana=",9);
-	snprintf(aux,sizeof(aux), "%.1f", self->med);
-	strncat(buffer,aux,5);
-	strncat(buffer," Muestras=",10);
-	snprintf(aux,sizeof(aux), "%d", self->i);
-	strncat(buffer,aux,10);
-
-	memset(self->buffer,0,self->cant);
-	self->i = 0;
-
-	return 0;
-}
-
-int serverprocess_order(serverprocess_t *self){
-		int j,s,smin;
-		float valuesaux;
-
-		for (s=0; s<(self->i); s++){
-		  smin=s;
-		  for (j=s+1; j<(self->i); j++){
-		    if ((self->buffer)[j]<(self->buffer)[smin])
-		    	smin=j;
-		  }
-		  valuesaux = (self->buffer)[s];
-			(self->buffer)[s] = (self->buffer)[smin];
-		  (self->buffer)[smin] = valuesaux;
-		}
-
+int serverprocess_getmed(serverprocess_t *self, char *buffer,size_t size){
 		self->min = (self->buffer)[0];
 		self->max = (self->buffer)[(self->i)-1];
 
@@ -70,6 +59,33 @@ int serverprocess_order(serverprocess_t *self){
 		else
 			self->med = (self->buffer)[(self->i)/2];
 
+	snprintf(buffer,size, "Max=%.1f Min=%.1f Mediana=%.1f Muestras=%d",
+	self->max,self->min,self->med,self->i);
+
+	(self->buffer)[0]=0;
+	self->i = 0;
+
+	return 0;
+}
+
+int serverprocess_compare(const void *elem1, const void *elem2) {
+        float *a, *b;
+        a = (float *) elem1;
+        b = (float *) elem2;
+
+				if (*a > *b){
+        	return 1;
+				}else{
+					if (*a < *b){
+						return -1;
+					} else{
+						return 0;
+					}
+				}
+}
+
+int serverprocess_order(serverprocess_t *self){
+	qsort(self->buffer, self->i, sizeof(float), &serverprocess_compare);
 	return 0;
 }
 
