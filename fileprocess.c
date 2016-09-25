@@ -1,5 +1,7 @@
 #include "fileprocess.h"
 
+#define VALUELENGTH 7
+
 int fileprocess_create(fileprocess_t *self, 	char* file){
 	self->arch = fopen(file, "rb");
 	self->endfile = false;
@@ -13,16 +15,18 @@ int fileprocess_getvalues(fileprocess_t *self, char* elem, int cant){
 	int i;
 	short value,endianvalue;
 	float prevvalue,currentvalue;
-	char cvalue[7];
+	char cvalue[VALUELENGTH];
+	bool lasttemp;
 
 	prevvalue = 0.0;
 	currentvalue = 0.0;
+	lasttemp = false;
 
 	strncat(elem," ",1);
 
 	i = 0;
 
-	while (fread(&value,sizeof(short),1,self->arch)>0){
+	while (!lasttemp && fread(&value,sizeof(short),1,self->arch)>0){
 		endianvalue = htons(value);
 		if (endianvalue > 0x02ff){
 			currentvalue = prevvalue;
@@ -40,7 +44,7 @@ int fileprocess_getvalues(fileprocess_t *self, char* elem, int cant){
 		} else {
 			strncat(elem,"\n",1);
 			i++;
-			break;
+			lasttemp = true;
 		}
 	}
 
@@ -52,7 +56,6 @@ int fileprocess_getvalues(fileprocess_t *self, char* elem, int cant){
 	if (i == 0){
 			self->endfile = true;
 	}
-
 	return i;
 }
 

@@ -12,6 +12,9 @@
 #define CLIENT "client"
 #define SERVER "server"
 #define MAXBUFFER 25
+#define EXITO 0
+#define ERROR_CONEXION 1
+#define ARGUMENTOS_INVALIDOS 2
 
 int main(int argc, char *argv[]){
 	int s;
@@ -26,13 +29,13 @@ int main(int argc, char *argv[]){
 
  			if (s!=0){
  				s = server_destroy(&server);
- 				return 1;
+ 				return ERROR_CONEXION;
  			}
 
  			s = server_receive(&server);
  			s = server_destroy(&server);
 		} else {
-			return 2;
+			return ARGUMENTOS_INVALIDOS;
 		}
 	}else{
 		if (strcmp(argv[1],CLIENT) == 0){
@@ -45,11 +48,10 @@ int main(int argc, char *argv[]){
 
  				if (s!=0){
 					s = client_destroy(&client);
-					return 1;
+					return ERROR_CONEXION;
  				}
 
 				buffer[0]=0;
-
  				strncat(buffer,argv[4],strlen(argv[4]));
 				strncat(buffer,"\n",1);
 
@@ -57,12 +59,11 @@ int main(int argc, char *argv[]){
 				client_send(&client);
    			client_destroy(&client);
 			} else {
-				return 2;
+				return ARGUMENTOS_INVALIDOS;
 			}
 		} else {
-			return 2;
+			return ARGUMENTOS_INVALIDOS;
 		}
 	}
-
-	return 0;
+	return EXITO;
 }

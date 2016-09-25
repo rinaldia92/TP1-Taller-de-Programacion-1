@@ -64,11 +64,11 @@ int client_send(client_t *self){
 			cantidad = (60-seg)/step;
 	}
 
+	datetime[0]=0;
+	buffer[0]=0;
+
 //Cargo el buffer con las temperaturas y envio mientras el archivo no este vacio
 	while (!fileprocess_isempty(&(self->process))){
-		datetime[0]=0;
-		buffer[0]=0;
-
 		datetime_getdatetime(&(self->datetime), buffer,sizeof(datetime));
 		datetime_getdatetime(&(self->datetime), datetime,sizeof(datetime));
 		datetime_minuteincrease(&(self->datetime));
